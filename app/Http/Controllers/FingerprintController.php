@@ -14,6 +14,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 use App\Events\FingerprintSynced;
+use App\Models\AttendanceSetting;
 
 
 class FingerprintController extends Controller
@@ -30,12 +31,36 @@ class FingerprintController extends Controller
         }
     }
 
-
     // public function scan(Request $request)
     // {
-    //     \Log::info('Fingerprint scan hit', $request->all());
+    //     Log::info('Fingerprint scan hit', $request->all());
 
-    //     $student = Student::where('fingerprint_id', $request->pin)->first();
+    //     // 1. Validate payload
+    //     $validator = Validator::make($request->all(), [
+    //         'fingerprint_id'  => 'required|string',
+    //         'time' => 'nullable|date_format:Y-m-d H:i:s',
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'status' => 'error',
+    //             'message' => 'Invalid payload',
+    //             'errors' => $validator->errors(),
+    //         ], 422);
+    //     }
+
+    //     // 2. Ambil waktu scan (dari device atau now)
+    //     $now = $request->time
+    //         ? Carbon::createFromFormat('Y-m-d H:i:s', $request->time, 'Asia/Jakarta')
+    //         : Carbon::now('Asia/Jakarta');
+
+    //     $today = $now->toDateString();
+
+    //     // 3. Cari siswa berdasarkan fingerprint
+    //     $student = Student::where('fingerprint_id', $request->fingerprint_id)->first();
+
+    //     // kalo suatu saat pake device
+    //     // $fingerprint = $request->fingerprint_id ?? $request->pin;
 
     //     if (!$student) {
     //         return response()->json([
@@ -44,9 +69,7 @@ class FingerprintController extends Controller
     //         ], 404);
     //     }
 
-    //     $now = \Carbon\Carbon::now('Asia/Jakarta');
-    //     $today = $now->toDateString();
-
+    //     // 4. Cegah double scan hari yang sama
     //     $exists = Attendance::where('student_id', $student->id)
     //         ->whereDate('date', $today)
     //         ->exists();
@@ -59,9 +82,11 @@ class FingerprintController extends Controller
     //         ], 409);
     //     }
 
-    //     $limit = $now->copy()->setTime(7, 0);
-    //     $isLate = $now->gt($limit);
+    //     // 5. Deteksi terlambat
+    //     $limit = $now->copy()->setTime(7, 0, 0);
+    //     $isLate = $now->greaterThan($limit);
 
+    //     // 6. Simpan absensi
     //     Attendance::create([
     //         'student_id' => $student->id,
     //         'date'       => $today,
@@ -78,77 +103,183 @@ class FingerprintController extends Controller
     //     ]);
     // }
 
+    // public function scan(Request $request)
+    // {
+    //     Log::info('Fingerprint scan hit', $request->all());
+
+    //     // 1. Validate payload
+    //     $validator = Validator::make($request->all(), [
+    //         'fingerprint_id' => 'required|string',
+    //         'time'           => 'nullable|date_format:Y-m-d H:i:s',
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'status'  => 'error',
+    //             'message' => 'Invalid payload',
+    //             'errors'  => $validator->errors(),
+    //         ], 422);
+    //     }
+
+    //     // 2. Ambil waktu scan (prioritas: device time)
+    //     $now = $request->time
+    //         ? Carbon::createFromFormat('Y-m-d H:i:s', $request->time, 'Asia/Jakarta')
+    //         : Carbon::now('Asia/Jakarta');
+
+    //     $today = $now->toDateString();
+
+    //     // 3. Cari siswa (WAJIB sudah punya fingerprint)
+    //     $student = Student::whereNotNull('fingerprint_id')
+    //         ->where('fingerprint_id', $request->fingerprint_id)
+    //         ->first();
+
+    //     if (!$student) {
+    //         return response()->json([
+    //             'status'  => 'error',
+    //             'message' => 'Fingerprint tidak terdaftar',
+    //         ], 404);
+    //     }
+
+    //     // 4. Cegah double scan
+    //     $exists = Attendance::where('student_id', $student->id)
+    //         ->whereDate('date', $today)
+    //         ->exists();
+
+    //     if ($exists) {
+    //         return response()->json([
+    //             'status'  => 'duplicate',
+    //             'message' => 'Sudah absen hari ini',
+    //             'student' => $student->name,
+    //         ], 409);
+    //     }
+
+    //     // ===============================
+    //     // 5. LOGIKA JAM ABSENSI (FIXED)
+    //     // ===============================
+
+    //     $setting = \App\Models\AttendanceSetting::first();
+
+    //     // Normalisasi jam (ANTI trailing data)
+    //     $rawStartTime = $setting?->start_time ?? '07:00';
+
+    //     $startTime = Carbon::parse($rawStartTime)
+    //         ->timezone('Asia/Jakarta')
+    //         ->format('H:i');
+
+    //     $lateMinutes = (int) ($setting?->late_minutes ?? 0);
+
+    //     // Jam masuk hari ini
+    //     $startAt = Carbon::createFromFormat('H:i', $startTime, 'Asia/Jakarta')
+    //         ->setDate($now->year, $now->month, $now->day);
+
+    //     // Batas telat
+    //     $lateLimit = $startAt->copy()->addMinutes($lateMinutes);
+
+    //     $isLate = $now->greaterThan($lateLimit);
+
+    //     // 6. Simpan absensi
+    //     Attendance::create([
+    //         'student_id' => $student->id,
+    //         'date'       => $today,
+    //         'time_in'    => $now->format('H:i:s'),
+    //         'status'     => $isLate ? 'TERLAMBAT' : 'HADIR',
+    //         'is_late'    => $isLate,
+    //     ]);
+
+    //     return response()->json([
+    //         'status'       => 'success',
+    //         'student'      => $student->name,
+    //         'time'         => $now->format('H:i:s'),
+    //         'is_late'      => $isLate,
+    //         'start_time'   => $startTime,
+    //         'late_limit'   => $lateLimit->format('H:i'),
+    //     ]);
+    // }
+
     public function scan(Request $request)
-    {
-        Log::info('Fingerprint scan hit', $request->all());
+{
+    Log::info('Fingerprint scan hit', $request->all());
 
-        // 1. Validate payload
-        $validator = Validator::make($request->all(), [
-            'fingerprint_id'  => 'required|string',
-            'time' => 'nullable|date_format:Y-m-d H:i:s',
-        ]);
+    $validator = Validator::make($request->all(), [
+        'fingerprint_id' => 'required|string',
+        'time' => 'nullable|date_format:Y-m-d H:i:s',
+    ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Invalid payload',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        // 2. Ambil waktu scan (dari device atau now)
-        $now = $request->time
-            ? Carbon::createFromFormat('Y-m-d H:i:s', $request->time, 'Asia/Jakarta')
-            : Carbon::now('Asia/Jakarta');
-
-        $today = $now->toDateString();
-
-        // 3. Cari siswa berdasarkan fingerprint
-        $student = Student::where('fingerprint_id', $request->fingerprint_id)->first();
-
-        // kalo suatu saat pake device
-        // $fingerprint = $request->fingerprint_id ?? $request->pin;
-
-        if (!$student) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Fingerprint tidak terdaftar'
-            ], 404);
-        }
-
-        // 4. Cegah double scan hari yang sama
-        $exists = Attendance::where('student_id', $student->id)
-            ->whereDate('date', $today)
-            ->exists();
-
-        if ($exists) {
-            return response()->json([
-                'status' => 'duplicate',
-                'message' => 'Sudah absen hari ini',
-                'student' => $student->name
-            ], 409);
-        }
-
-        // 5. Deteksi terlambat
-        $limit = $now->copy()->setTime(7, 0, 0);
-        $isLate = $now->greaterThan($limit);
-
-        // 6. Simpan absensi
-        Attendance::create([
-            'student_id' => $student->id,
-            'date'       => $today,
-            'time_in'    => $now->format('H:i:s'),
-            'status'     => $isLate ? 'TERLAMBAT' : 'HADIR',
-            'is_late'    => $isLate,
-        ]);
-
+    if ($validator->fails()) {
         return response()->json([
-            'status'  => 'success',
-            'student' => $student->name,
-            'time'    => $now->format('H:i:s'),
-            'is_late' => $isLate,
-        ]);
+            'status' => 'error',
+            'message' => 'Invalid payload',
+            'errors' => $validator->errors(),
+        ], 422);
     }
+
+    // waktu scan (device > server)
+    $now = $request->time
+        ? Carbon::parse($request->time, 'Asia/Jakarta')
+        : Carbon::now('Asia/Jakarta');
+
+    $today = $now->toDateString();
+
+    $student = Student::whereNotNull('fingerprint_id')
+        ->where('fingerprint_id', $request->fingerprint_id)
+        ->first();
+
+    if (!$student) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Fingerprint tidak terdaftar',
+        ], 404);
+    }
+
+    $exists = Attendance::where('student_id', $student->id)
+        ->whereDate('date', $today)
+        ->exists();
+
+    if ($exists) {
+        return response()->json([
+            'status' => 'duplicate',
+            'message' => 'Sudah absen hari ini',
+            'student' => $student->name,
+        ], 409);
+    }
+
+    // ===============================
+    // JAM ABSENSI (SINKRON SETTING)
+    // ===============================
+    $setting = AttendanceSetting::first();
+
+    $startTime = Carbon::parse(
+        $setting?->start_time ?? '07:00'
+    )->format('H:i');
+
+    $lateMinutes = (int) ($setting?->late_minutes ?? 0);
+
+    $startAt = Carbon::parse($today . ' ' . $startTime);
+    $lateLimit = $startAt->copy()->addMinutes($lateMinutes);
+
+    $isLate = $now->greaterThan($lateLimit);
+
+    // ⚠️ SIMPAN DATA MENTAH SAJA
+    Attendance::create([
+        'student_id' => $student->id,
+        'date'       => $today,
+        'time_in'    => $now->format('H:i:s'),
+        'status'     => $isLate ? 'TERLAMBAT' : 'HADIR',
+        'is_late'    => $isLate,
+    ]);
+
+
+    return response()->json([
+        'status'     => 'success',
+        'student'    => $student->name,
+        'time'       => $now->format('H:i:s'),
+        'is_late'    => $isLate,
+        'start_time' => $startTime,
+        'late_limit' => $lateLimit->format('H:i'),
+    ]);
+}
+
+
 
     // public function update(Request $request, $id)
     // {

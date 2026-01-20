@@ -8,6 +8,8 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\AttendanceExport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use App\Models\AttendanceSetting;
+use Carbon\Carbon;
 use Yajra\DataTables\Facades\DataTables;
 
 class ReportController extends Controller
@@ -19,14 +21,59 @@ class ReportController extends Controller
         ]);
     }
 
+    // public function getData(Request $r)
+    // {
+    //     $query = $this->buildQuery($r);
+
+    //     return DataTables::of($query)
+    //         ->addColumn('siswa_name', fn($a) => $a->students->name ?? '-')
+    //         ->addColumn('class_name', fn($a) => $a->students->classRoom->name ?? '-')
+    //         ->editColumn('status', fn($a) => $a->status ?? '-')
+    //         ->make(true);
+    // }
+
     public function getData(Request $r)
     {
+        $setting = AttendanceSetting::first();
+
+        // normalisasi jam masuk (AMAN mau H:i atau H:i:s)
+        $startTime = Carbon::parse($setting?->start_time ?? '07:00')
+            ->format('H:i');
+
+        $lateMinutes = (int) ($setting?->late_minutes ?? 0);
+
         $query = $this->buildQuery($r);
 
         return DataTables::of($query)
-            ->addColumn('siswa_name', fn($a) => $a->students->name ?? '-')
-            ->addColumn('class_name', fn($a) => $a->students->classRoom->name ?? '-')
-            ->editColumn('status', fn($a) => $a->status ?? '-')
+
+            ->addColumn('siswa_name', fn ($a) =>
+                optional($a->students)->name ?? '-'
+            )
+
+            ->addColumn('class_name', fn ($a) =>
+                optional(optional($a->students)->classRoom)->name ?? '-'
+            )
+
+            ->addColumn('status', function ($a) use ($startTime, $lateMinutes) {
+
+                if (!$a->date || !$a->time_in) {
+                    return '-';
+                }
+
+                // jam masuk hari tersebut
+                $startAt = Carbon::parse($a->date . ' ' . $startTime);
+
+                // batas telat
+                $lateLimit = $startAt->copy()->addMinutes($lateMinutes);
+
+                // waktu scan siswa (AUTO detect format)
+                $scanTime = Carbon::parse($a->date . ' ' . $a->time_in);
+
+                return $scanTime->greaterThan($lateLimit)
+                    ? 'TERLAMBAT'
+                    : 'HADIR';
+            })
+
             ->make(true);
     }
 

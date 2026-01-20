@@ -20,32 +20,42 @@ class DeviceFingerprintController extends Controller
         return view('device.fingerprint', compact('class'));
     }
 
+    // public function scan()
+    // {
+    //     $classes = ClassRoom::withCount('students')->get();
+    //     return view('device.scan', compact('classes'));
+    // }
+
     public function scan()
     {
-        $classes = ClassRoom::withCount('students')->get();
+        $classes = ClassRoom::with(['students' => function ($q) {
+            $q->whereNotNull('fingerprint_id');
+        }])->get();
+
         return view('device.scan', compact('classes'));
     }
 
+
     public function register(Request $request)
-{
-    $validated = $request->validate(
-        [
-            'student_id' => 'required|exists:students,id',
-            'fingerprint_id' => 'required|unique:students,fingerprint_id',
-        ],
-        [
-            'fingerprint_id.required' => 'Fingerprint wajib diisi.',
-            'fingerprint_id.unique'   => 'Fingerprint sudah digunakan oleh siswa lain.',
-        ]
-    );
+    {
+        $validated = $request->validate(
+            [
+                'student_id' => 'required|exists:students,id',
+                'fingerprint_id' => 'required|unique:students,fingerprint_id',
+            ],
+            [
+                'fingerprint_id.required' => 'Fingerprint wajib diisi.',
+                'fingerprint_id.unique'   => 'Fingerprint sudah digunakan oleh siswa lain.',
+            ]
+        );
 
-    $student = Student::findOrFail($validated['student_id']);
+        $student = Student::findOrFail($validated['student_id']);
 
-    $student->fingerprint_id = $validated['fingerprint_id'];
-    $student->save();
+        $student->fingerprint_id = $validated['fingerprint_id'];
+        $student->save();
 
-    return back()->with('success', 'Fingerprint berhasil diregistrasi.');
-}
+        return back()->with('success', 'Fingerprint berhasil diregistrasi.');
+    }
 
 
      public function clear($id)

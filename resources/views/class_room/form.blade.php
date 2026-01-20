@@ -1,89 +1,109 @@
 @extends('layouts.master')
 
-@push('style')
-    <link rel="stylesheet" href="/admin/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
-    <link rel="stylesheet" href="/admin/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
-    <link rel="stylesheet" href="/admin/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
-@endpush
 @section('content')
-    @php
-        if (isset($class)) {
-            $actionUrl = route('class.update', $class->id);
-        } else {
-            $actionUrl = route('class.store');
-        }
-    @endphp
-{{ Session::get('message') }}
-    <div class="content-header">
-        <div class="container-fluid">
-            <div class="row mb-2">
-                <div class="col-sm-6">
-                    @if(isset($class))
-                        <h1 class="m-0">Edit Kelas</h1>
-                    @else
-                        <h1 class="m-0">Tambah Kelas</h1>
-                    @endif
+@php
+    $isEdit = isset($class);
+    $actionUrl = $isEdit
+        ? route('class.update', $class->id)
+        : route('class.store');
+@endphp
 
-                </div><!-- /.col -->
-                <div class="col-sm-6">
-                    <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item"><a href="/dashboard">Home</a></li>
-                        <li class="breadcrumb-item active">Kelas</li>
-                    </ol>
-                </div><!-- /.col -->
-            </div><!-- /.row -->
-        </div>
-    </div>
-    <section class="content">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="card card-secondary">
-                        <div class="card-header">
-                            <h3 class="card-title">{{ isset($class) ? 'Edit Kelas' : 'Tambah Kelas' }}</h3>
-                        </div>
-                        <form id="submitClass" method="POST" action="{{ $actionUrl }}" enctype="multipart/form-data">
-                            @if (@isset($class))
-                                {{ method_field('PUT') }}
-                                <input type="hidden" name="user_id" value="{{ $class->id }}" />
-                            @endif
-                            @csrf
-                            <div class="card-body">
-                                <div class="form-group">
-                                    <label for="name">Kelas</label>
-                                    <input type="text" required class="form-control" name="name" id="name"
-                                        placeholder="Kelas" value="{{ isset($class) ? $class->name : old('name') }}">
-                                    @error('name')
-                                        <div class="mt-2 text-danger">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
-                            <div class="card-footer">
-                                <button type="submit" submitClass="submit" class="btn btn-info btn-sm">Submit</button>
-                                <a href="{{ url()->previous() ?? route('class.manage') }}" class="btn btn-secondary btn-sm">
-                                    Batal
-                                </a>
-                            </div>
-                        </form>
-                    </div>
-
-                </div>
+{{-- ================= HEADER ================= --}}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2 align-items-center">
+            <div class="col-sm-7">
+                <h1 class="m-0 font-weight-bold">
+                    {{ $isEdit ? 'Edit Kelas' : 'Tambah Kelas' }}
+                </h1>
+                <small class="text-muted">
+                    {{ $isEdit
+                        ? 'Perbarui informasi kelas'
+                        : 'Buat kelas baru untuk siswa' }}
+                </small>
+            </div>
+            <div class="col-sm-5">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item">
+                        <a href="{{ route('dashboard') }}">Home</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{{ route('class.manage') }}">Kelas</a>
+                    </li>
+                    <li class="breadcrumb-item active">
+                        {{ $isEdit ? 'Edit' : 'Tambah' }}
+                    </li>
+                </ol>
             </div>
         </div>
-    </section>
+    </div>
+</div>
+
+{{-- ================= CONTENT ================= --}}
+<section class="content">
+<div class="container-fluid">
+<div class="row justify-content-center">
+
+<div class="col-md-6">
+
+<div class="card card-primary card-outline">
+
+    {{-- Card Header --}}
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-school mr-1"></i>
+            Informasi Kelas
+        </h3>
+    </div>
+
+    <form method="POST" action="{{ $actionUrl }}">
+        @csrf
+        @if($isEdit)
+            @method('PUT')
+        @endif
+
+        <div class="card-body">
+
+            {{-- INFO --}}
+            <div class="alert alert-info small">
+                <i class="fas fa-info-circle mr-1"></i>
+                Kelas digunakan untuk mengelompokkan siswa dan keperluan absensi.
+            </div>
+
+            {{-- NAMA KELAS --}}
+            <div class="form-group">
+                <label>Nama Kelas</label>
+                <input type="text"
+                       name="name"
+                       class="form-control"
+                       placeholder="Contoh: X IPA 1 / XI RPL A"
+                       required
+                       value="{{ old('name', $class->name ?? '') }}">
+                @error('name')
+                    <div class="text-danger mt-1">{{ $message }}</div>
+                @enderror
+            </div>
+
+        </div>
+
+        {{-- FOOTER --}}
+        <div class="card-footer d-flex justify-content-between">
+            <a href="{{ route('class.manage') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Batal
+            </a>
+
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i>
+                {{ $isEdit ? 'Simpan Perubahan' : 'Simpan Kelas' }}
+            </button>
+        </div>
+
+    </form>
+
+</div>
+
+</div>
+</div>
+</div>
+</section>
 @endsection
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
-<script src="/admin/plugins/datatables/jquery.dataTables.min.js"></script>
-<script src="/admin/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
-<script type="text/javascript">
-    $(document).ready(function() {
-
-        $('#description').summernote({
-        placeholder: 'Deskripsi',
-        tabsize: 2,
-        height: 150
-        });
-    });
-</script>
-
-

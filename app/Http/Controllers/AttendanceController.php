@@ -28,30 +28,53 @@ class AttendanceController extends Controller
         return view('attendances.manage', $attendance);
     }
 
-    // public function getData()
+
+    // public function getData(Request $request)
     // {
     //     try {
-    //         $attendances = Attendance::with('students')->select(['id', 'date', 'time_in', 'status', 'student_id'])
-    //             ->orderBy('created_at', 'desc');
+
+    //         // Ambil date dari request atau fallback ke hari ini
+    //         $date = $request->input('date');
+
+    //         if (!$date) {
+    //             $date = Attendance::max('date') ?? now()->toDateString();
+    //         }
+
+    //         $attendances = Attendance::with(['students.classRoom'])
+    //             ->select(['id', 'date', 'time_in', 'status', 'student_id'])
+    //             ->whereDate('date', $date)
+    //             ->orderBy('time_in', 'asc');
+
+    //         if ($request->filled('class_room_id')) {
+    //             $attendances->whereHas('students', function ($q) use ($request) {
+    //                 $q->where('class_room_id', $request->class_room_id);
+    //             });
+    //         }
+
+    //         if ($request->filled('student_id')) {
+    //             $attendances->where('student_id', $request->student_id);
+    //         }
 
     //         return DataTables::of($attendances)
-    //             ->addColumn('siswa_name', fn($attendance) => $attendance->students ? $attendance->students->name : '\Tidak ada service')
-    //             // ->editColumn('created_at', fn($attendances) => date('d-m-Y', strtotime($attendances->created_at)))
-
-    //             ->addColumn('action', function ($attendance) {
-    //                 '<div style="display: flex; gap: 0.5rem; align-items: center;">' .
-    //                     $string = '<button title="Hapus" class="btn btn-icon btn-sm btn-danger waves-effect waves-light delete-form"><i class="fa fa-trash"></i></button>';
-
-    //                     $string .= '<form  action="/attendance/delete/' . $attendance->id . '" method="POST">' . method_field('delete') . csrf_field() . '</form>';
-
-    //                 '</div>';
-
-    //                 return $string;
+    //             ->addColumn('siswa_name', fn($a) => optional($a->students)->name ?? '-')
+    //             ->addColumn('kelas_name', fn($a) => optional(optional($a->students)->classRoom)->name ?? '-')
+    //             ->addColumn('status', fn($a) => $a->status ? 'Terlambat' : 'Hadir')
+    //             ->addColumn('action', function ($a) {
+    //                 $name = optional($a->students)->name ?? '-';
+    //                 return '
+    //                 <div style="display:flex;gap:.5rem;">
+    //                     <button class="btn btn-sm btn-primary btn-history" data-id="'.$a->student_id.'" data-name="'.$name.'">Detail</button>
+    //                     <form action="/attendance/delete/'.$a->id.'" method="POST" style="display:inline;">
+    //                         '.method_field('delete').csrf_field().'
+    //                         <button class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
+    //                     </form>
+    //                 </div>';
     //             })
     //             ->rawColumns(['action'])
     //             ->make(true);
-    //     } catch (\Exception $error) {
-    //         return response()->json(['error' => $error->getMessage()]);
+
+    //     } catch (\Exception $e) {
+    //         return response()->json(['error' => $e->getMessage()], 500);
     //     }
     // }
 
@@ -59,15 +82,23 @@ class AttendanceController extends Controller
     {
         try {
 
-            // Ambil date dari request atau fallback ke hari ini
-            $date = $request->input('date');
+            // Ambil date (fallback aman)
+            $date = $request->input('date')
+                ?? Attendance::max('date')
+                ?? now()->toDateString();
 
-            if (!$date) {
-                $date = Attendance::max('date') ?? now()->toDateString();
-            }
+            // Ambil setting jam absensi
+            $setting = \App\Models\AttendanceSetting::first();
+
+            $startTime = $setting?->start_time ?? '07:00';
+            $lateMinutes = (int) ($setting?->late_minutes ?? 0);
+
+            // Hitung batas telat untuk tanggal ini
+            $startAt = \Carbon\Carbon::parse($date.' '.$startTime, 'Asia/Jakarta');
+            $lateLimit = $startAt->copy()->addMinutes($lateMinutes);
 
             $attendances = Attendance::with(['students.classRoom'])
-                ->select(['id', 'date', 'time_in', 'status', 'student_id'])
+                ->select(['id', 'date', 'time_in', 'student_id'])
                 ->whereDate('date', $date)
                 ->orderBy('time_in', 'asc');
 
@@ -81,26 +112,66 @@ class AttendanceController extends Controller
                 $attendances->where('student_id', $request->student_id);
             }
 
+             if ($request->filled('siswa_name')) {
+                $attendances->whereHas('students', function ($q) use ($request) {
+                    $q->where('name', 'LIKE', '%'.$request->siswa_name.'%');
+                });
+            }
+
             return DataTables::of($attendances)
-                ->addColumn('siswa_name', fn($a) => optional($a->students)->name ?? '-')
-                ->addColumn('kelas_name', fn($a) => optional(optional($a->students)->classRoom)->name ?? '-')
-                ->addColumn('status', fn($a) => $a->status ? 'Terlambat' : 'Hadir')
+                ->addColumn('siswa_name', fn ($a) =>
+                    optional($a->students)->name ?? '-'
+                )
+                ->addColumn('kelas_name', fn ($a) =>
+                    optional(optional($a->students)->classRoom)->name ?? '-'
+                )
+
+                ->addColumn('status', function ($a) use ($lateLimit) {
+
+                    if (!$a->time_in) {
+                        return '<span class="badge badge-secondary">Belum Absen</span>';
+                    }
+
+                    $scanTime = \Carbon\Carbon::parse(
+                        $a->date.' '.$a->time_in,
+                        'Asia/Jakarta'
+                    );
+
+                    $isLate = $scanTime->greaterThan($lateLimit);
+
+                    return $isLate
+                        ? '<span class="badge badge-danger">Terlambat</span>'
+                        : '<span class="badge badge-success">Hadir</span>';
+                })
+
                 ->addColumn('action', function ($a) {
                     $name = optional($a->students)->name ?? '-';
+
                     return '
-                    <div style="display:flex;gap:.5rem;">
-                        <button class="btn btn-sm btn-primary btn-history" data-id="'.$a->student_id.'" data-name="'.$name.'">Detail</button>
-                        <form action="/attendance/delete/'.$a->id.'" method="POST" style="display:inline;">
-                            '.method_field('delete').csrf_field().'
-                            <button class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
-                        </form>
-                    </div>';
+                        <div class="d-flex gap-1">
+                            <button
+                                class="btn btn-sm btn-primary btn-history"
+                                data-id="'.$a->student_id.'"
+                                data-name="'.$name.'">
+                                Detail
+                            </button>
+
+                            <form action="/attendance/delete/'.$a->id.'" method="POST">
+                                '.method_field('delete').csrf_field().'
+                                <button class="btn btn-sm btn-danger delete-form">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    ';
                 })
-                ->rawColumns(['action'])
+                ->rawColumns(['status','action'])
                 ->make(true);
 
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            return response()->json([
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 
@@ -122,11 +193,37 @@ class AttendanceController extends Controller
 
     public function history($studentId)
     {
-        $history = Attendance::where('student_id', $studentId)
-            ->orderBy('date', 'desc')
-            ->get(['date', 'time_in', 'status', 'is_late']);
+        $setting = \App\Models\AttendanceSetting::first();
 
-        return response()->json($history);
+        $startTime   = $setting?->start_time ?? '07:00';
+        $lateMinutes = (int) ($setting?->late_minutes ?? 0);
+
+        $records = Attendance::where('student_id', $studentId)
+            ->orderBy('date', 'desc')
+            ->get()
+            ->map(function ($a) use ($startTime, $lateMinutes) {
+
+                $startAt = \Carbon\Carbon::parse(
+                    $a->date . ' ' . $startTime,
+                    'Asia/Jakarta'
+                );
+
+                $lateLimit = $startAt->copy()->addMinutes($lateMinutes);
+
+                $scanTime = $a->time_in
+                    ? \Carbon\Carbon::parse($a->date . ' ' . $a->time_in, 'Asia/Jakarta')
+                    : null;
+
+                $isLate = $scanTime && $scanTime->greaterThan($lateLimit);
+
+                return [
+                    'date'    => $a->date,
+                    'time_in' => $a->time_in,
+                    'is_late' => $isLate, // ✅ DINAMIS
+                ];
+            });
+
+        return response()->json($records);
     }
 
 

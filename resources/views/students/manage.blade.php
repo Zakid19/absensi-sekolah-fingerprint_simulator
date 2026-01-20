@@ -1,117 +1,149 @@
 @extends('layouts.master')
+
 @push('style')
-    <link rel="stylesheet" href="/admin/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
-    <link rel="stylesheet" href="/admin/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
-    <link rel="stylesheet" href="/admin/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
+<link rel="stylesheet" href="/admin/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="/admin/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
 @endpush
 
 @section('content')
-    <div class="content-header">
-        <div class="container-fluid">
-            <div class="row mb-2">
-                <div class="col-sm-6">
-                    <h1 class="m-0">Data Siswa
-                        @if($selected_class)
-                        {{ $selected_class->name }}
-                        @endif
-                    </h1>
 
-                </div><!-- /.col -->
-                <div class="col-sm-6">
-                    <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item"><a href="/dashboard">Home</a></li>
-                        <li class="breadcrumb-item active">Produk</li>
-                    </ol>
-                </div><!-- /.col -->
-            </div><!-- /.row -->
-        </div><!-- /.container-fluid -->
-    </div>
-    <!-- /.content-header -->
-
-    <section class="content">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-12 col-sm-12">
-                    <div class="card card-primary card-outline card-outline-tabs">
-                        <div class="card-header p-0 border-bottom-0">
-                        </div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <a href="{{ route('student.create',['class_room_id'=>$selected_class]) }}" class="btn btn-info btn-sm">
-                                    Tambah
-                                </a>
-                                {{-- <a href="{{ route('student.create') }}" class="btn btn-info btn-sm">Tambah</a> --}}
-                            </div>
-                            <div class="table-responsive">
-                                <table id="dataStudent" class="table table-striped table-hover">
-                                    <thead>
-                                        <tr>
-                                            @foreach ($table['columns'] as $column)
-                                                <th>{{ $column['label'] }}</th>
-                                            @endforeach
-                                        </tr>
-                                    </thead>
-                                    <tbody></tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <!-- /.card -->
-                    </div>
-                </div>
+{{-- ================= HEADER ================= --}}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2 align-items-center">
+            <div class="col-sm-8">
+                <h1 class="m-0 font-weight-bold">
+                    Manajemen Siswa
+                    @if($selected_class)
+                        <span class="badge badge-info ml-2">
+                            {{ $selected_class->name }}
+                        </span>
+                    @endif
+                </h1>
+                <small class="text-muted">
+                    Kelola data siswa berdasarkan kelas
+                </small>
+            </div>
+            <div class="col-sm-4">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item">
+                        <a href="{{ route('dashboard') }}">Home</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{{ route('class.index') }}">Kelas</a>
+                    </li>
+                    <li class="breadcrumb-item active">Siswa</li>
+                </ol>
             </div>
         </div>
-    </section>
+    </div>
+</div>
+
+{{-- ================= CONTENT ================= --}}
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+
+                <div class="card card-primary card-outline">
+
+                    {{-- Card Header --}}
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h3 class="card-title">
+                                <i class="fas fa-users mr-1"></i>
+                                Daftar Siswa
+                            </h3>
+
+                            <div>
+                                <a href="{{ route('class.index') }}"
+                                   class="btn btn-sm btn-secondary">
+                                    <i class="fas fa-arrow-left"></i> Pilih Kelas
+                                </a>
+
+                                <a href="{{ route('student.create', ['class_room_id' => $selected_class]) }}"
+                                   class="btn btn-sm btn-primary">
+                                    <i class="fas fa-plus"></i> Tambah Siswa
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Card Body --}}
+                    <div class="card-body">
+
+                        <div class="table-responsive">
+                            <table id="dataStudent"
+                                   class="table table-bordered table-hover w-100">
+
+                                <thead class="thead-light">
+                                    <tr>
+                                        @foreach ($table['columns'] as $column)
+                                            <th>{{ $column['label'] }}</th>
+                                        @endforeach
+                                    </tr>
+                                </thead>
+
+                                <tbody></tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                    {{-- /.card-body --}}
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
 @endsection
 
 @push('script')
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
-    <script src="/admin/plugins/datatables/jquery.dataTables.min.js"></script>
-    <script src="/admin/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
-    <script type="text/javascript">
-        $(document).ready(function() {
-            $('#dataStudent').DataTable({
-                language: {
-                    url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/id.json',
-                },
+<script src="/admin/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/admin/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
 
-                processing: true,
-                serverSide: false,
-                ajax: '{{ $table['table_url'] }}',
-                ordering: true,
-                // searching: true,
-                paging: true,
-                autoWidth: true,
-                scrollY: false,
-                // info: false,
+<script>
+$(function () {
+    $('#dataStudent').DataTable({
+        language: {
+            url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/id.json',
+        },
+        processing: true,
+        serverSide: false,
+        ajax: '{{ $table['table_url'] }}',
+        ordering: true,
+        paging: true,
+        autoWidth: false,
 
-                columns: [
-                    @foreach ($table['columns'] as $column)
-                        {
-                            data: '{{ $column['name'] }}',
-                            name: '{{ $column['name'] }}'
-                        },
-                    @endforeach
-                ],
-                drawCallback: function() {
-                    // Delete Confirmation
-                    $(".delete-form").on("click", function() {
-                        var form = $(this).parent().find("form");
-                        Swal.fire({
-                            title: 'Are you sure?',
-                            text: "Apakah kamu yakin ingin menghapus item ini?",
-                            type: 'warning',
-                            showCancelButton: true,
-                            confirmButtonColor: '#3085d6',
-                            cancelButtonColor: '#d33',
-                            confirmButtonText: 'Yes!'
-                        }).then((result) => {
-                            if (result.value) {
-                                form.submit();
-                            }
-                        })
-                    });
-                }
+        columns: [
+            @foreach ($table['columns'] as $column)
+            {
+                data: '{{ $column['name'] }}',
+                name: '{{ $column['name'] }}'
+            },
+            @endforeach
+        ],
+
+        drawCallback: function () {
+            $('.delete-form').off('click').on('click', function () {
+                let form = $(this).closest('td').find('form');
+
+                Swal.fire({
+                    title: 'Konfirmasi',
+                    text: 'Yakin ingin menghapus siswa ini?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Hapus',
+                    cancelButtonText: 'Batal',
+                    confirmButtonColor: '#d33'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
             });
-        });
-    </script>
+        }
+    });
+});
+</script>
 @endpush

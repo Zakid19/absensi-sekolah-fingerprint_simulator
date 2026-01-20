@@ -1,141 +1,180 @@
 @extends('layouts.master')
 
-@push('style')
-    <link rel="stylesheet" href="/admin/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
-    <link rel="stylesheet" href="/admin/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
-    <link rel="stylesheet" href="/admin/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
-@endpush
 @section('content')
-    @php
-        if (isset($student)) {
-            $actionUrl = route('student.update', $student->id);
-        } else {
-            $actionUrl = route('student.store');
-        }
-    @endphp
-{{ Session::get('message') }}
-    <div class="content-header">
-        <div class="container-fluid">
-            <div class="row mb-2">
-                <div class="col-sm-6">
-                    @if(isset($student))
-                        <h1 class="m-0">Edit Siswa</h1>
-                    @else
-                        <h1 class="m-0">Tambah Siswa</h1>
-                    @endif
+@php
+    $isEdit = isset($student);
+    $actionUrl = $isEdit
+        ? route('student.update', $student->id)
+        : route('student.store');
+@endphp
 
-                </div><!-- /.col -->
-                <div class="col-sm-6">
-                    <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item"><a href="/dashboard">Home</a></li>
-                        <li class="breadcrumb-item active">Siswa</li>
-                    </ol>
-                </div><!-- /.col -->
-            </div><!-- /.row -->
-        </div>
-    </div>
+{{-- ================= HEADER ================= --}}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2 align-items-center">
+            <div class="col-sm-7">
+                <h1 class="m-0 font-weight-bold">
+                    {{ $isEdit ? 'Edit Siswa' : 'Tambah Siswa' }}
+                </h1>
+                <small class="text-muted">
+                    {{ $isEdit
+                        ? 'Perbarui data siswa'
+                        : 'Daftarkan siswa ke dalam kelas' }}
+                </small>
+            </div>
+            <div class="col-sm-5">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item">
+                        <a href="{{ route('dashboard') }}">Home</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{{ url()->previous() }}" >
+                             Siswa
+                        </a>
 
-    <section class="content">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-md-12">
-
-                    <div class="card card-secondary">
-                        <div class="card-header">
-                            <h3 class="card-title">{{ isset($student) ? 'Edit Siswa' : 'Tambah Siswa' }}</h3>
-                        </div>
-                        <form id="submitStudent" method="POST" action="{{ $actionUrl }}" enctype="multipart/form-data">
-                            @if (@isset($student))
-                                {{ method_field('PUT') }}
-                                <input type="hidden" name="user_id" value="{{ $student->id }}" />
-                            @endif
-                            @csrf
-                            <div class="card-body">
-                                <div class="form-group">
-                                    <label for="name">NIS</label>
-                                    <input type="text" required class="form-control" name="nis" id="nis"
-                                        placeholder="NIS" value="{{ isset($student) ? $student->nis : old('nis') }}">
-                                    @error('nis')
-                                        <div class="mt-2 text-danger">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="form-group">
-                                    <label for="name">Nama Siswa</label>
-                                    <input type="text" required class="form-control" name="name" id="name"
-                                        placeholder="Nama Siswa" value="{{ isset($student) ? $student->name : old('name') }}">
-                                    @error('name')
-                                        <div class="mt-2 text-danger">{{ $message }}</div>
-                                    @enderror
-                                </div>
-
-                                @if(isset($student))
-                                    {{-- MODE EDIT: kelas bisa diubah --}}
-                                    <div class="form-group">
-                                        <label for="class_room_id">Kelas</label>
-                                        <select name="class_room_id" id="class_room_id" class="form-control" required>
-                                            <option value="">-- Pilih Kelas --</option>
-                                            @foreach($classes as $class)
-                                                <option value="{{ $class->id }}"
-                                                    {{ $student->class_room_id == $class->id ? 'selected' : '' }}>
-                                                    {{ $class->name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                        @error('class_room_id')
-                                            <div class="mt-2 text-danger">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-
-                                @elseif(isset($class_room_id))
-                                    {{-- MODE CREATE DARI KELAS: hidden --}}
-                                    <input type="hidden" name="class_room_id" value="{{ $class_room_id }}">
-
-                                @else
-                                    {{-- MODE CREATE MANUAL: dropdown --}}
-                                    <div class="form-group">
-                                        <label for="class_room_id">Kelas</label>
-                                        <select name="class_room_id" id="class_room_id" class="form-control" required>
-                                            <option value="">-- Pilih Kelas --</option>
-                                            @foreach($classes as $class)
-                                                <option value="{{ $class->id }}" {{ old('class_room_id') == $class->id ? 'selected' : '' }}>
-                                                    {{ $class->name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                        @error('class_room_id')
-                                            <div class="mt-2 text-danger">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                @endif
-
-
-                            </div>
-                            <div class="card-footer">
-                                <button type="submit" submitStudent="submit" class="btn btn-info btn-sm">Submit</button>
-                                <a href="{{ url()->previous() ?? route('student.manage') }}" class="btn btn-secondary btn-sm">
-                                    Batal
-                                </a>
-                            </div>
-                        </form>
-                    </div>
-
-                </div>
+                        {{-- <a href="{{ route('student.manage') }}">Siswa</a> --}}
+                    </li>
+                    <li class="breadcrumb-item active">
+                        {{ $isEdit ? 'Edit' : 'Tambah' }}
+                    </li>
+                </ol>
             </div>
         </div>
-    </section>
+    </div>
+</div>
+
+{{-- ================= CONTENT ================= --}}
+<section class="content">
+<div class="container-fluid">
+
+<div class="card card-primary card-outline">
+
+    {{-- Card Header --}}
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-user-graduate mr-1"></i>
+            Informasi Siswa
+        </h3>
+    </div>
+
+    <form method="POST" action="{{ $actionUrl }}">
+        @csrf
+        @if($isEdit)
+            @method('PUT')
+        @endif
+
+        <div class="card-body">
+
+            {{-- INFO --}}
+            <div class="alert alert-info small">
+                <i class="fas fa-info-circle mr-1"></i>
+                Data siswa digunakan untuk absensi dan identifikasi fingerprint.
+            </div>
+
+            <div class="row">
+
+                {{-- NIS --}}
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>NIS</label>
+                        <input type="text"
+                               name="nis"
+                               class="form-control"
+                               placeholder="Nomor Induk Siswa"
+                               required
+                               value="{{ old('nis', $student->nis ?? '') }}">
+                        @error('nis')
+                            <div class="text-danger mt-1">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+
+                {{-- NAMA --}}
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Nama Siswa</label>
+                        <input type="text"
+                               name="name"
+                               class="form-control"
+                               placeholder="Nama lengkap siswa"
+                               required
+                               value="{{ old('name', $student->name ?? '') }}">
+                        @error('name')
+                            <div class="text-danger mt-1">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+
+                {{-- KELAS --}}
+                <div class="col-md-6">
+                    @if($isEdit)
+                        {{-- MODE EDIT --}}
+                        <div class="form-group">
+                            <label>Kelas</label>
+                            <select name="class_room_id" class="form-control" required>
+                                <option value="">-- Pilih Kelas --</option>
+                                @foreach($classes as $class)
+                                    <option value="{{ $class->id }}"
+                                        {{ $student->class_room_id == $class->id ? 'selected' : '' }}>
+                                        {{ $class->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('class_room_id')
+                                <div class="text-danger mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                    @elseif(isset($class_room_id))
+                        {{-- CREATE DARI HALAMAN KELAS --}}
+                        <input type="hidden" name="class_room_id" value="{{ $class_room_id }}">
+                        <div class="form-group">
+                            <label>Kelas</label>
+                            <input type="text"
+                                   class="form-control"
+                                   value="{{ optional($classes->firstWhere('id',$class_room_id))->name }}"
+                                   disabled>
+                        </div>
+
+                    @else
+                        {{-- CREATE MANUAL --}}
+                        <div class="form-group">
+                            <label>Kelas</label>
+                            <select name="class_room_id" class="form-control" required>
+                                <option value="">-- Pilih Kelas --</option>
+                                @foreach($classes as $class)
+                                    <option value="{{ $class->id }}"
+                                        {{ old('class_room_id') == $class->id ? 'selected' : '' }}>
+                                        {{ $class->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('class_room_id')
+                                <div class="text-danger mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    @endif
+                </div>
+
+            </div>
+        </div>
+
+        {{-- FOOTER --}}
+        <div class="card-footer d-flex justify-content-between">
+            <a href="{{ url()->previous() }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Batal
+            </a>
+
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i>
+                {{ $isEdit ? 'Simpan Perubahan' : 'Simpan Siswa' }}
+            </button>
+        </div>
+
+    </form>
+
+</div>
+
+</div>
+</section>
 @endsection
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
-<script src="/admin/plugins/datatables/jquery.dataTables.min.js"></script>
-<script src="/admin/plugins/datatables-bs4/js/dataTables.bootstrap4.min.js"></script>
-<script type="text/javascript">
-    $(document).ready(function() {
-
-        $('#description').summernote({
-        placeholder: 'Deskripsi',
-        tabsize: 2,
-        height: 150
-        });
-    });
-</script>
-
-

@@ -11,6 +11,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SystemBackupController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\DeviceFingerprintController;
+use App\Http\Controllers\AttendanceSettingController;
 
 // Route::get('/', function () {
 //     return view('dashboard');
@@ -66,6 +67,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/history/{student}', [AttendanceController::class, 'history'])->name('history');
 
     });
+
+    Route::prefix('attendance')->name('attendance.')->group(function () {
+        Route::get('/settings', [AttendanceSettingController::class, 'edit'])->name('settings.edit');
+        Route::post('/settings', [AttendanceSettingController::class, 'update'])->name('settings.update');
+    });
+
 
     Route::group(['prefix' => 'reports', 'as' => 'reports.'], function() {
         Route::get('/manage', [ReportController::class, 'manage'])->name('manage');

@@ -1,108 +1,167 @@
 @extends('layouts.master')
 
-@push('style')
-<link rel="stylesheet" href="/admin/plugins/datatables-responsive/css/responsive.bootstrap4.min.css">
-<link rel="stylesheet" href="/admin/plugins/datatables-bs4/css/dataTables.bootstrap4.min.css">
-<link rel="stylesheet" href="/admin/plugins/datatables-buttons/css/buttons.bootstrap4.min.css">
-@endpush
-
 @section('content')
 @php
-    if (isset($teacher)) {
-        $actionUrl = route('teacher.update', $teacher->id);
-    } else {
-        $actionUrl = route('teacher.store');
-    }
+    $isEdit = isset($teacher);
+    $actionUrl = $isEdit
+        ? route('teacher.update', $teacher->id)
+        : route('teacher.store');
 @endphp
 
+{{-- ================= HEADER ================= --}}
 <div class="content-header">
     <div class="container-fluid">
-        <div class="row mb-2">
-            <div class="col-sm-6">
-                <h1 class="m-0">Guru</h1>
+        <div class="row mb-2 align-items-center">
+            <div class="col-sm-7">
+                <h1 class="m-0 font-weight-bold">
+                    {{ $isEdit ? 'Edit Guru' : 'Tambah Guru' }}
+                </h1>
+                <small class="text-muted">
+                    {{ $isEdit
+                        ? 'Perbarui data guru dan akun login'
+                        : 'Menambahkan guru baru beserta akun login' }}
+                </small>
             </div>
-            <div class="col-sm-6">
+            <div class="col-sm-5">
                 <ol class="breadcrumb float-sm-right">
-                    <li class="breadcrumb-item"><a href="/dashboard">Home</a></li>
-                    <li class="breadcrumb-item active">Guru</li>
+                    <li class="breadcrumb-item">
+                        <a href="{{ route('dashboard') }}">Home</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{{ route('teacher.manage') }}">Guru</a>
+                    </li>
+                    <li class="breadcrumb-item active">
+                        {{ $isEdit ? 'Edit' : 'Tambah' }}
+                    </li>
                 </ol>
             </div>
         </div>
     </div>
 </div>
 
+{{-- ================= CONTENT ================= --}}
 <section class="content">
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-md-12">
+<div class="container-fluid">
+<div class="row justify-content-center">
 
-      <div class="card card-secondary">
-        <div class="card-header">
-            <h3 class="card-title">{{ isset($teacher) ? 'Edit Guru' : 'Tambah Guru' }}</h3>
-        </div>
+<div class="col-md-8">
 
-        <form method="POST" action="{{ $actionUrl }}">
-            @csrf
-            @if(isset($teacher))
-                @method('PUT')
-                <input type="hidden" name="user_id" value="{{ $teacher->user_id }}">
-            @endif
+<div class="card card-primary card-outline">
 
-            <div class="card-body">
+    {{-- Card Header --}}
+    <div class="card-header">
+        <h3 class="card-title">
+            <i class="fas fa-chalkboard-teacher mr-1"></i>
+            Informasi Guru
+        </h3>
+    </div>
 
+    <form method="POST" action="{{ $actionUrl }}">
+        @csrf
+        @if($isEdit)
+            @method('PUT')
+            <input type="hidden" name="user_id" value="{{ $teacher->user_id }}">
+        @endif
+
+        <div class="card-body">
+
+            {{-- INFO --}}
+            <div class="alert alert-info small">
+                <i class="fas fa-info-circle mr-1"></i>
+                Guru akan memiliki akun login dengan role <b>Teacher</b>.
+            </div>
+
+            {{-- NAMA --}}
+            <div class="form-group">
+                <label>Nama Guru</label>
+                <input type="text"
+                       name="name"
+                       class="form-control"
+                       placeholder="Nama lengkap guru"
+                       required
+                       value="{{ old('name', $teacher->name ?? '') }}">
+                @error('name')
+                    <div class="text-danger mt-1">{{ $message }}</div>
+                @enderror
+            </div>
+
+            {{-- EMAIL --}}
+            <div class="form-group">
+                <label>Email Login</label>
+                <input type="email"
+                       name="email"
+                       class="form-control"
+                       placeholder="Email untuk login"
+                       required
+                       value="{{ old('email', $teacher->email ?? '') }}">
+                <small class="text-muted">
+                    Email digunakan sebagai username login.
+                </small>
+                @error('email')
+                    <div class="text-danger mt-1">{{ $message }}</div>
+                @enderror
+            </div>
+
+            {{-- PHONE --}}
+            <div class="form-group">
+                <label>No. HP (Opsional)</label>
+                <input type="text"
+                       name="phone"
+                       class="form-control"
+                       placeholder="Contoh: 08xxxxxxxxxx"
+                       value="{{ old('phone', $teacher->phone ?? '') }}">
+            </div>
+
+            {{-- PASSWORD --}}
+            @if($isEdit)
+                <hr>
                 <div class="form-group">
-                    <label>Nama Guru</label>
-                    <input type="text" name="name" class="form-control" required
-                          value="{{ isset($teacher) ? $teacher->name : old('name') }}">
-                    @error('name') <div class="text-danger mt-1">{{ $message }}</div> @enderror
-                </div>
-
-                <div class="form-group">
-                    <label>Email Login</label>
-                    <input type="email" name="email" class="form-control" required
-                          value="{{ isset($teacher) ? $teacher->email : old('email') }}">
-                    @error('email') <div class="text-danger mt-1">{{ $message }}</div> @enderror
-                </div>
-
-                <div class="form-group">
-                    <label>No. HP</label>
-                    <input type="text" name="phone" class="form-control"
-                          value="{{ isset($teacher) ? $teacher->phone : old('phone') }}">
-                </div>
-
-                @if(isset($teacher))
-                <div class="form-group">
-                    <label>Password Baru (opsional)</label>
-                    <input type="password" name="password" class="form-control" placeholder="Kosongkan jika tidak ingin mengubah">
-                    @error('password') <div class="text-danger mt-1">{{ $message }}</div> @enderror
+                    <label>Password Baru</label>
+                    <input type="password"
+                           name="password"
+                           class="form-control"
+                           placeholder="Kosongkan jika tidak ingin mengubah">
+                    <small class="text-muted">
+                        Isi hanya jika ingin mengganti password guru.
+                    </small>
+                    @error('password')
+                        <div class="text-danger mt-1">{{ $message }}</div>
+                    @enderror
                 </div>
 
                 <div class="form-group">
                     <label>Konfirmasi Password</label>
-                    <input type="password" name="password_confirmation" class="form-control">
+                    <input type="password"
+                           name="password_confirmation"
+                           class="form-control">
                 </div>
-                @endif
-
-                @if(!isset($teacher))
-                <div class="alert alert-info">
-                    Password default akan dibuat otomatis: <strong>teacher123</strong>
+            @else
+                <div class="alert alert-warning small">
+                    <i class="fas fa-key mr-1"></i>
+                    Password awal akan dibuat otomatis:
+                    <strong>teacher123</strong>
                 </div>
-                @endif
+            @endif
 
+        </div>
 
+        {{-- FOOTER --}}
+        <div class="card-footer d-flex justify-content-between">
+            <a href="{{ route('teacher.manage') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Batal
+            </a>
 
-            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Simpan
+            </button>
+        </div>
 
-            <div class="card-footer">
-                <button type="submit" class="btn btn-info btn-sm">Simpan</button>
-                <a href="{{ route('teacher.manage') }}" class="btn btn-secondary btn-sm">Batal</a>
-            </div>
+    </form>
 
-        </form>
-      </div>
+</div>
 
-      </div>
-    </div>
-  </div>
+</div>
+</div>
+</div>
 </section>
 @endsection
