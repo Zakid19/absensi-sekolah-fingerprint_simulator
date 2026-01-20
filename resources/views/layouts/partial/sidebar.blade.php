@@ -25,9 +25,9 @@
                 <span class="d-block text-white font-weight-bold">
                     {{ Auth::user()->name }}
                 </span>
-                <small class="text-muted text-capitalize">
+                {{-- <small class="text-muted text-capitalize">
                     {{ Auth::user()->role }}
-                </small>
+                </small> --}}
             </div>
         </div>
 
