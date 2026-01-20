@@ -51,9 +51,9 @@
                 </div>
 
                 <div class="col-md-3 col-sm-6 mb-2">
-                    <label class="text-muted small">ID Siswa</label>
+                    <label class="text-muted small">Nama Siswa</label>
                     <input type="text" id="filter-student" class="form-control"
-                           placeholder="Contoh: 1023">
+                           placeholder="Siswa">
                 </div>
 
                 <div class="col-md-3 col-sm-6 mb-2 text-muted small">
