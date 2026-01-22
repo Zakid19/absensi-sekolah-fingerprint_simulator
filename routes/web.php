@@ -12,6 +12,9 @@ use App\Http\Controllers\SystemBackupController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\DeviceFingerprintController;
 use App\Http\Controllers\AttendanceSettingController;
+use App\Http\Controllers\Api\FingerprintMappingController;
+use App\Http\Controllers\PendingFingerprintController;
+use App\Http\Controllers\FingerprintModeController;
 
 // Route::get('/', function () {
 //     return view('dashboard');
@@ -99,14 +102,17 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::group(['prefix' => 'fingerprint', 'as' => 'fingerprint.'], function() {
-        Route::get('/{id}', [FingerprintController::class, 'set_fingerprint'])->name('set_fingerprint');
+        Route::get('/', [FingerprintController::class, 'index'])->name('register');
+        // Route::get('/{id}', [FingerprintController::class, 'set_fingerprint'])->name('set_fingerprint');
         Route::post('/log', [FingerprintController::class,'scan']);
-        Route::put('/{id}', [FingerprintController::class, 'update'])->name('update');
-        Route::delete('/{id}', [FingerprintController::class, 'clear'])->name('delete');
+        // Route::put('/{id}', [FingerprintController::class, 'update'])->name('update');
+        // Route::delete('/{id}', [FingerprintController::class, 'clear'])->name('delete');
 
-        Route::post('/wait/{id}', [FingerprintController::class, 'wait'])->name('fingerprint.wait');
-        Route::post('/receive', [FingerprintController::class, 'receiveFromDevice']);
+        // Route::post('/wait/{id}', [FingerprintController::class, 'wait'])->name('fingerprint.wait');
+        // Route::post('/receive', [FingerprintController::class, 'receiveFromDevice']);
     });
+
+    Route::post('/fingerprint/map',[FingerprintMappingController::class, 'map'])->name('fingerprint.map');
 
     Route::group(['prefix' => 'device', 'as' => 'device.'], function() {
         Route::get('/fingerprint', [DeviceFingerprintController::class, 'index'])->name('fingerprint.index');
@@ -116,6 +122,26 @@ Route::middleware('auth')->group(function () {
         Route::delete('/fingerprint/delete{id}', [DeviceFingerprintController::class, 'clear'])->name('fingerprint.clear');
 
     });
+
+
+
+     Route::post('/fingerprint/mode',
+        [FingerprintModeController::class, 'set']
+    )->name('fingerprint.mode');
+
+    Route::get('/fingerprints/attendance', [FingerprintController::class, 'attedance'])->name('fingerprints.attendance');
+
+    // Route::get('/fingerprints/attendance', function () {
+    //     return view('fingerprints.attendance');
+    // })->name('fingerprints.attendance');
+
+    Route::get('/fingerprints/pending',
+        [PendingFingerprintController::class, 'index']
+    )->name('fingerprints.pending');
+
+    Route::post('/fingerprints/map',
+        [PendingFingerprintController::class, 'map']
+    )->name('fingerprints.map');
 
 
 });

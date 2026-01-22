@@ -81,7 +81,7 @@
                         <a href="#" class="nav-link {{ $fingerprintActive ? 'active' : '' }}">
                             <i class="nav-icon fas fa-fingerprint"></i>
                             <p>
-                                Fingerprint
+                                Fingerprint Simulator
                                 <i class="right fas fa-angle-left"></i>
                             </p>
                         </a>
@@ -94,10 +94,37 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('device.fingerprint.scan') }}"
+                                {{-- <a href="{{ route('device.fingerprint.scan') }}" --}}
+                                <a href="{{ route('fingerprints.attendance') }}"
                                    class="nav-link {{ request()->is('device/fingerprint/scan') ? 'active' : '' }}">
                                     <i class="far fa-dot-circle nav-icon"></i>
                                     <p>Scan</p>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-item has-treeview {{ $fingerprintActive ? 'menu-open' : '' }}">
+                        <a href="#" class="nav-link {{ $fingerprintActive ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-fingerprint"></i>
+                            <p>
+                                Fingerprint Device
+                                <i class="right fas fa-angle-left"></i>
+                            </p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a href="{{ route('fingerprints.pending') }}"
+                                   class="nav-link {{ request()->is('fingerprint.index') ? 'active' : '' }}">
+                                    <i class="far fa-dot-circle nav-icon"></i>
+                                    <p>Registrasi</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('fingerprints.attendance') }}"
+                                   class="nav-link {{ request()->is('fingerprints.attendance') ? 'active' : '' }}">
+                                    <i class="far fa-dot-circle nav-icon"></i>
+                                    <p>Absen Finger</p>
                                 </a>
                             </li>
                         </ul>

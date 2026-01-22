@@ -13,6 +13,8 @@ class Attendance extends Model
 
     protected $keyType = 'string';
 
+    public $timestamps = true;
+
     protected $fillable = [
         'date',
         'time_in',
