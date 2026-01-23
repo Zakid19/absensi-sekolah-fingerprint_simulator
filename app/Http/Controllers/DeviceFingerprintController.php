@@ -11,20 +11,14 @@ class DeviceFingerprintController extends Controller
     public function index()
     {
         $classes = ClassRoom::withCount('students')->get();
-        return view('device.classes', compact('classes'));
+        return view('simulator.classes', compact('classes'));
     }
 
     public function showClass($id)
     {
         $class = ClassRoom::with('students')->findOrFail($id);
-        return view('device.fingerprint', compact('class'));
+        return view('simulator.fingerprint', compact('class'));
     }
-
-    // public function scan()
-    // {
-    //     $classes = ClassRoom::withCount('students')->get();
-    //     return view('device.scan', compact('classes'));
-    // }
 
     public function scan()
     {
@@ -32,7 +26,7 @@ class DeviceFingerprintController extends Controller
             $q->whereNotNull('fingerprint_id');
         }])->get();
 
-        return view('device.scan', compact('classes'));
+        return view('simulator.scan', compact('classes'));
     }
 
 
@@ -40,8 +34,8 @@ class DeviceFingerprintController extends Controller
     {
         $validated = $request->validate(
             [
-                'student_id' => 'required|exists:students,id',
-                'fingerprint_id' => 'required|unique:students,fingerprint_id',
+                'student_id' => 'required|exists:siswa,id',
+                'fingerprint_id' => 'required|unique:siswa,fingerprint_id',
             ],
             [
                 'fingerprint_id.required' => 'Fingerprint wajib diisi.',

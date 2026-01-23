@@ -12,25 +12,16 @@ use App\Http\Controllers\SystemBackupController;
 use App\Http\Controllers\TeacherController;
 use App\Http\Controllers\DeviceFingerprintController;
 use App\Http\Controllers\AttendanceSettingController;
-use App\Http\Controllers\Api\FingerprintMappingController;
 use App\Http\Controllers\PendingFingerprintController;
 use App\Http\Controllers\FingerprintModeController;
 
-// Route::get('/', function () {
-//     return view('dashboard');
-// });
+Route::get('/', function () {
+    return view('auth.login');
+});
 
 // Route::get('/', function () {
 //     return view('dashboard');
 // })->middleware(['auth', 'verified'])->name('dashboard');
-
-Route::get('/', function () {
-    if (auth()->check()) {
-        return redirect('/dashboard');
-    }
-
-    return redirect('/login');
-});
 
 
 // Route::middleware(['auth', 'role:admin'])->group(function () {
@@ -76,7 +67,6 @@ Route::middleware('auth')->group(function () {
         Route::post('/settings', [AttendanceSettingController::class, 'update'])->name('settings.update');
     });
 
-
     Route::group(['prefix' => 'reports', 'as' => 'reports.'], function() {
         Route::get('/manage', [ReportController::class, 'manage'])->name('manage');
         Route::get('/data', [ReportController::class, 'getData'])->name('data');
@@ -101,20 +91,15 @@ Route::middleware('auth')->group(function () {
         Route::delete('/delete/{id}', [TeacherController::class, 'destroy'])->name('delete');
     });
 
+
+    // Fingerprint
     Route::group(['prefix' => 'fingerprint', 'as' => 'fingerprint.'], function() {
         Route::get('/', [FingerprintController::class, 'index'])->name('register');
-        // Route::get('/{id}', [FingerprintController::class, 'set_fingerprint'])->name('set_fingerprint');
         Route::post('/log', [FingerprintController::class,'scan']);
-        // Route::put('/{id}', [FingerprintController::class, 'update'])->name('update');
-        // Route::delete('/{id}', [FingerprintController::class, 'clear'])->name('delete');
-
-        // Route::post('/wait/{id}', [FingerprintController::class, 'wait'])->name('fingerprint.wait');
-        // Route::post('/receive', [FingerprintController::class, 'receiveFromDevice']);
     });
 
-    Route::post('/fingerprint/map',[FingerprintMappingController::class, 'map'])->name('fingerprint.map');
-
-    Route::group(['prefix' => 'device', 'as' => 'device.'], function() {
+    // Simulator
+    Route::group(['prefix' => 'simulator', 'as' => 'simulator.'], function() {
         Route::get('/fingerprint', [DeviceFingerprintController::class, 'index'])->name('fingerprint.index');
         Route::get('/fingerprint/class/{id}', [DeviceFingerprintController::class, 'showClass'])->name('class.show');
         Route::post('/fingerprint/register', [DeviceFingerprintController::class, 'register'])->name('fingerprint.register');
@@ -123,40 +108,20 @@ Route::middleware('auth')->group(function () {
 
     });
 
+    // Device
+    Route::group(['prefix' => 'device', 'as' => 'device.'], function() {
+        Route::post('/fingerprint/mode',[FingerprintModeController::class, 'set'])->name('fingerprint.mode');
+        Route::get('/fingerprints/attendance', [FingerprintController::class, 'attedance'])->name('fingerprints.attendance');
+        Route::get('/fingerprints/class', [FingerprintController::class, 'student_reset'])->name('fingerprints.student_reset');
+        Route::get('/fingerprints/class/{id}', [FingerprintController::class, 'showClass'])->name('fingerprints.class.show');
+        Route::post('/students/{student}/reset-fingerprint', [FingerprintController::class, 'reset'])->name('students.resetFingerprint');
+        Route::get('/fingerprints/pending',[PendingFingerprintController::class, 'index'])->name('fingerprints.pending');
+        Route::post('/fingerprints/map',[PendingFingerprintController::class, 'map'])->name('fingerprints.map');
 
-
-     Route::post('/fingerprint/mode',
-        [FingerprintModeController::class, 'set']
-    )->name('fingerprint.mode');
-
-    Route::get('/fingerprints/attendance', [FingerprintController::class, 'attedance'])->name('fingerprints.attendance');
-
-    // Route::get('/fingerprints/attendance', function () {
-    //     return view('fingerprints.attendance');
-    // })->name('fingerprints.attendance');
-
-    Route::get('/fingerprints/pending',
-        [PendingFingerprintController::class, 'index']
-    )->name('fingerprints.pending');
-
-    Route::post('/fingerprints/map',
-        [PendingFingerprintController::class, 'map']
-    )->name('fingerprints.map');
+    });
 
 
 });
-
-
-// Route::middleware(['auth', 'role:teacher'])->group(function () {
-
-//     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
-//     Route::group(['prefix' => 'attendance', 'as' => 'attendance.'], function() {
-//         Route::get('/manage', [AttendanceController::class, 'manage'])->name('manage');
-//         Route::get('/data', [AttendanceController::class, 'getData'])->name('data');
-//     });
-
-// });
 
 
 

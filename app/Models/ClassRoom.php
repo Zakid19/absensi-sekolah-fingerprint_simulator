@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ClassRoom extends Model
 {
-    protected $table = 'class_rooms';
+    protected $table = 'kelas';
 
     protected $primaryKey = 'id';
 

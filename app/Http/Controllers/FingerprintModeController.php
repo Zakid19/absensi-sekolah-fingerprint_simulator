@@ -16,12 +16,12 @@ class FingerprintModeController extends Controller
 
         if ($request->mode === 'attendance') {
             return redirect()
-                ->route('fingerprints.attendance')
+                ->route('device.fingerprints.attendance')
                 ->with('success', 'Mode absensi diaktifkan');
         }
 
         return redirect()
-            ->route('fingerprints.pending')
+            ->route('device.fingerprints.pending')
             ->with('success', 'Mode registrasi diaktifkan');
     }
 

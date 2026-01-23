@@ -62,8 +62,8 @@ class FingerprintAttendanceController extends Controller
 
     public function last()
     {
-        $last = Attendance::with('student')
-            ->orderBy('updated_at', 'desc')
+        $last = Attendance::with('students')
+            ->orderBy('id', 'desc')
             ->first();
 
         if (!$last) {
@@ -71,13 +71,12 @@ class FingerprintAttendanceController extends Controller
         }
 
         return response()->json([
-            'id'        => $last->id,
+            'id'        => $last->id,               // 🔑 EVENT KEY
             'name'      => $last->student->name ?? '-',
             'time_in'   => $last->time_in,
             'status'    => $last->status,
-            'updated_at'=> $last->updated_at->format('H:i:s'),
+            'scan_time' => $last->created_at->format('H:i:s'),
         ]);
     }
-
 
 }

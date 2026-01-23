@@ -10,7 +10,7 @@ class Student extends Model
 {
     use HasFactory;
 
-    protected $table = 'students';
+    protected $table = 'siswa';
 
     protected $primaryKey = 'id';
 

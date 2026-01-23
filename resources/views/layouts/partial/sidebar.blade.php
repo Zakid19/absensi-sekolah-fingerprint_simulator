@@ -74,11 +74,11 @@
 
                     {{-- Fingerprint --}}
                     @php
-                        $fingerprintActive = request()->is('device/fingerprint*');
+                        $fingerprintSimulatorActive = request()->is('simulator/fingerprint*');
                     @endphp
 
-                    <li class="nav-item has-treeview {{ $fingerprintActive ? 'menu-open' : '' }}">
-                        <a href="#" class="nav-link {{ $fingerprintActive ? 'active' : '' }}">
+                    <li class="nav-item has-treeview {{ $fingerprintSimulatorActive ? 'menu-open' : '' }}">
+                        <a href="#" class="nav-link {{ $fingerprintSimulatorActive ? 'active' : '' }}">
                             <i class="nav-icon fas fa-fingerprint"></i>
                             <p>
                                 Fingerprint Simulator
@@ -87,16 +87,16 @@
                         </a>
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
-                                <a href="{{ route('device.fingerprint.index') }}"
-                                   class="nav-link {{ request()->is('device/fingerprint') ? 'active' : '' }}">
+                                <a href="{{ route('simulator.fingerprint.index') }}"
+                                   class="nav-link {{ request()->is('simulator/fingerprint') ? 'active' : '' }}">
                                     <i class="far fa-dot-circle nav-icon"></i>
                                     <p>Registrasi</p>
                                 </a>
                             </li>
                             <li class="nav-item">
                                 {{-- <a href="{{ route('device.fingerprint.scan') }}" --}}
-                                <a href="{{ route('fingerprints.attendance') }}"
-                                   class="nav-link {{ request()->is('device/fingerprint/scan') ? 'active' : '' }}">
+                                <a href="{{ route('simulator.fingerprint.scan') }}"
+                                   class="nav-link {{ request()->is('simulator/fingerprint/scan') ? 'active' : '' }}">
                                     <i class="far fa-dot-circle nav-icon"></i>
                                     <p>Scan</p>
                                 </a>
@@ -104,8 +104,12 @@
                         </ul>
                     </li>
 
-                    <li class="nav-item has-treeview {{ $fingerprintActive ? 'menu-open' : '' }}">
-                        <a href="#" class="nav-link {{ $fingerprintActive ? 'active' : '' }}">
+                    @php
+                        $fingerprintDeviceActive = request()->is('device/fingerprints*');
+                    @endphp
+
+                    <li class="nav-item has-treeview {{ $fingerprintDeviceActive ? 'menu-open' : '' }}">
+                        <a href="#" class="nav-link {{ $fingerprintDeviceActive ? 'active' : '' }}">
                             <i class="nav-icon fas fa-fingerprint"></i>
                             <p>
                                 Fingerprint Device
@@ -114,17 +118,24 @@
                         </a>
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
-                                <a href="{{ route('fingerprints.pending') }}"
-                                   class="nav-link {{ request()->is('fingerprint.index') ? 'active' : '' }}">
+                                <a href="{{ route('device.fingerprints.pending') }}"
+                                   class="nav-link {{ request()->is('device/fingerprints/pending') ? 'active' : '' }}">
                                     <i class="far fa-dot-circle nav-icon"></i>
                                     <p>Registrasi</p>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('fingerprints.attendance') }}"
-                                   class="nav-link {{ request()->is('fingerprints.attendance') ? 'active' : '' }}">
+                                <a href="{{ route('device.fingerprints.attendance') }}"
+                                   class="nav-link {{ request()->is('device/fingerprints/attendance') ? 'active' : '' }}">
                                     <i class="far fa-dot-circle nav-icon"></i>
                                     <p>Absen Finger</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('device.fingerprints.student_reset') }}"
+                                   class="nav-link {{ request()->is('device/fingerprints/class*') ? 'active' : '' }}">
+                                    <i class="far fa-dot-circle nav-icon"></i>
+                                    <p>Reset Fingerprint</p>
                                 </a>
                             </li>
                         </ul>

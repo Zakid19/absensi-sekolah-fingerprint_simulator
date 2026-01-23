@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('attendance_settings', function (Blueprint $table) {
+        Schema::create('pengaturan_absensi', function (Blueprint $table) {
             $table->id();
             $table->time('start_time');      // jam masuk
             $table->integer('late_minutes');
@@ -24,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('attendance_settings');
+        Schema::dropIfExists('pengaturan_absensi');
     }
 };

@@ -32,17 +32,17 @@ class TeacherController extends Controller
             // $teacher = Teacher::with('users')->select(['id', 'name', 'email', 'role'])
             //     ->orderBy('created_at', 'desc');
 
-            $teacher = Teacher::join('users', 'users.id', '=', 'teachers.user_id')
+            $teacher = Teacher::join('users', 'users.id', '=', 'guru.user_id')
             ->select(
-                'teachers.id',
-                'teachers.name',
-                'teachers.email',
-                'teachers.phone',
+                'guru.id',
+                'guru.name',
+                'guru.email',
+                'guru.phone',
                 'users.email as user_email',
                 'users.role',
-                'teachers.created_at'
+                'guru.created_at'
             )
-            ->orderBy('teachers.created_at', 'desc');
+            ->orderBy('guru.created_at', 'desc');
 
             return DataTables::of($teacher)
 

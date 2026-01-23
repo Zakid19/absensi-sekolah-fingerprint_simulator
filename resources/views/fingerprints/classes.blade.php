@@ -80,7 +80,7 @@
                                         </span>
                                     </td>
                                     <td class="text-center">
-                                        <a href="{{ route('device.class.show', $class->id) }}"
+                                        <a href="{{ route('device.fingerprints.class.show', $class->id) }}"
                                            class="btn btn-sm btn-primary">
                                             <i class="fas fa-fingerprint"></i>
                                             Pilih Kelas

@@ -23,7 +23,7 @@
       <div class="col-sm-4">
         <ol class="breadcrumb float-sm-right">
           <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
-          <li class="breadcrumb-item"><a href="{{ route('device.fingerprint.index') }}">Fingerprint</a></li>
+          <li class="breadcrumb-item"><a href="{{ route('simulator.fingerprint.index') }}">Fingerprint</a></li>
           <li class="breadcrumb-item active">Siswa</li>
         </ol>
       </div>
@@ -36,7 +36,7 @@
 <div class="container-fluid">
 
   {{-- Back --}}
-  <a href="{{ route('device.fingerprint.index') }}" class="btn btn-secondary btn-sm mb-3">
+  <a href="{{ route('simulator.fingerprint.index') }}" class="btn btn-secondary btn-sm mb-3">
     <i class="fas fa-arrow-left"></i> Kembali Pilih Kelas
   </a>
 
@@ -156,7 +156,7 @@
                     </div>
 
                     {{-- FORM REGISTER / EDIT --}}
-                    <form method="POST" action="{{ route('device.fingerprint.register') }}">
+                    <form method="POST" action="{{ route('simulator.fingerprint.register') }}">
                       @csrf
                       <input type="hidden" name="student_id" value="{{ $s->id }}">
 
@@ -178,7 +178,7 @@
                   {{-- FOOTER / CLEAR --}}
                   @if($s->fingerprint_id)
                   <div class="modal-footer justify-content-center bg-light">
-                    <form action="{{ route('device.fingerprint.clear', $s->id) }}"
+                    <form action="{{ route('simulator.fingerprint.clear', $s->id) }}"
                           method="POST">
                       @csrf
                       @method('DELETE')

@@ -6,9 +6,9 @@
     animation: pulse 1.2s infinite;
 }
 @keyframes pulse {
-    0%   { transform: scale(1); opacity: .6; }
-    50%  { transform: scale(1.1); opacity: 1; }
-    100% { transform: scale(1); opacity: .6; }
+    0% { transform: scale(1); opacity:.6 }
+    50% { transform: scale(1.1); opacity:1 }
+    100% { transform: scale(1); opacity:.6 }
 }
 
 .log-item {
@@ -16,8 +16,9 @@
     border-bottom: 1px dashed #e5e5e5;
     padding: 6px 0;
 }
-.log-item:last-child { border-bottom: none; }
-.log-new { background: #e6fffa; }
+.log-item:last-child { border-bottom:none }
+.log-new { background:#e6fffa }
+.log-info { color:#6c757d }
 </style>
 @endpush
 
@@ -28,7 +29,6 @@
   {{-- ================= SCANNER ================= --}}
   <div class="col-md-5">
     <div class="card shadow-lg" style="border-radius:16px">
-
       <div class="card-header bg-dark text-white text-center">
         <h4 class="mb-0">
           <i class="fas fa-fingerprint"></i> Fingerprint Scanner
@@ -37,7 +37,6 @@
       </div>
 
       <div class="card-body text-center">
-
         <div class="mb-4">
           <i class="fas fa-hand-point-up fa-4x text-secondary"></i>
           <p class="mt-3 mb-1"><strong>Simulasi Absensi</strong></p>
@@ -45,7 +44,6 @@
         </div>
 
         <form id="scanForm">
-
           <div class="form-group">
             <select id="classSelect" class="form-control">
               <option value="">— Pilih Kelas —</option>
@@ -65,21 +63,19 @@
             <i class="fas fa-play"></i> Scan Finger
           </button>
         </form>
-
       </div>
 
       <div class="card-footer text-center text-muted small">
         Device Status:
-        <span id="deviceStatus" class="text-muted">Checking...</span><br>
+        <span id="deviceStatus">Checking...</span><br>
         <a href="#" data-toggle="modal" data-target="#lastScanModal">
           Lihat Scan Terakhir
         </a>
       </div>
-
     </div>
   </div>
 
-  {{-- ================= REALTIME LOG ================= --}}
+  {{-- ================= LOG ================= --}}
   <div class="col-md-5">
     <div class="card shadow-sm" style="border-radius:14px">
       <div class="card-header bg-light">
@@ -106,23 +102,32 @@
         <div class="fingerprint pulse mb-3">
           <i class="fas fa-fingerprint fa-5x text-secondary"></i>
         </div>
-        <h5>Scanning...</h5>
-        <p class="text-muted mb-1" id="scanStudentName"></p>
-        <small class="text-muted" id="scanClassName"></small>
+        <h5 class="mb-2">Scanning...</h5>
+        <p class="mb-0 text-muted" id="modalStudent">-</p>
+        <small class="text-muted" id="modalTime">-</small>
       </div>
 
-      {{-- SUCCESS --}}
-      <div id="scanSuccess" class="d-none">
-        <i class="fas fa-check-circle fa-5x text-success mb-3"></i>
-        <h4>Scan Berhasil</h4>
-        <p id="successText"></p>
-      </div>
+      {{-- RESULT --}}
+      <div id="scanResult" class="d-none">
+        <i id="modalIcon" class="fas fa-check-circle fa-5x mb-3"></i>
+        <h4 id="modalTitle"></h4>
 
-      {{-- FAILED --}}
-      <div id="scanFailed" class="d-none">
-        <i class="fas fa-times-circle fa-5x text-danger mb-3"></i>
-        <h4>Scan Gagal</h4>
-        <p id="failedText"></p>
+        <table class="table table-sm table-borderless mt-3 mb-0">
+          <tr>
+            <th class="text-right" width="40%">Nama</th>
+            <td class="text-left" id="resultName">-</td>
+          </tr>
+          <tr>
+            <th class="text-right">Waktu</th>
+            <td class="text-left" id="resultTime">-</td>
+          </tr>
+          <tr>
+            <th class="text-right">Status</th>
+            <td class="text-left">
+              <span id="resultStatus" class="badge px-3 py-2"></span>
+            </td>
+          </tr>
+        </table>
       </div>
 
     </div>
@@ -133,19 +138,13 @@
 <div class="modal fade" id="lastScanModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content p-4">
-
       <h5 class="mb-3 text-center">📌 Scan Terakhir</h5>
-
       <table class="table table-sm mb-0">
         <tr><th>Nama</th><td id="lastName">-</td></tr>
         <tr><th>Status</th><td id="lastStatus">-</td></tr>
         <tr><th>Jam</th><td id="lastTime">-</td></tr>
       </table>
-
-      <button class="btn btn-secondary btn-sm mt-3" data-dismiss="modal">
-        Tutup
-      </button>
-
+      <button class="btn btn-secondary btn-sm mt-3" data-dismiss="modal">Tutup</button>
     </div>
   </div>
 </div>
@@ -154,14 +153,13 @@
 @push('script')
 <script>
 const classes = @json($classes);
-
 const classSelect   = document.getElementById('classSelect');
 const studentSelect = document.getElementById('studentSelect');
 const scanBtn       = document.getElementById('scanBtn');
 const logBox        = document.getElementById('logBox');
 
 let lastFingerprint = null;
-let lastScanTime = null;
+let lastScanTime    = null;
 
 /* ================= DEVICE STATUS ================= */
 fetch('/api/fingerprint/ping')
@@ -192,96 +190,157 @@ studentSelect.addEventListener('change', () => {
     scanBtn.disabled = !studentSelect.value;
 });
 
-/* ================= SCAN (NO CONFIRM) ================= */
+/* ================= SCAN ================= */
 document.getElementById('scanForm').addEventListener('submit', async e => {
     e.preventDefault();
-
     const now = Date.now();
 
-    // Silent anti double scan
+    const selectedText =
+      studentSelect.options[studentSelect.selectedIndex].text;
+
+    // ALWAYS SHOW LOADING FIRST
+    $('#modalStudent').text(selectedText);
+    $('#modalTime').text('-');
+    $('#scanModal').modal({ backdrop:'static', keyboard:false });
+    $('#scanLoading').show();
+    $('#scanResult').addClass('d-none');
+
+    // anti double scan (still loading first)
     if (lastFingerprint === studentSelect.value && now - lastScanTime < 60000) {
-        $('#scanFailed').removeClass('d-none');
-        $('#failedText').text('Fingerprint baru saja discan.');
-        $('#scanModal').modal('show');
-        setTimeout(()=>$('#scanModal').modal('hide'),1500);
+        setTimeout(() => {
+            showResultModal({
+                name: selectedText,
+                time: '-',
+                status: 'SUDAH ABSEN'
+            });
+        }, 400);
         return;
     }
 
     scanBtn.disabled = true;
 
-    document.getElementById('scanStudentName').innerText =
-      studentSelect.options[studentSelect.selectedIndex].text;
-    document.getElementById('scanClassName').innerText =
-      classSelect.options[classSelect.selectedIndex].text;
-
-    $('#scanModal').modal({ backdrop:'static', keyboard:false });
-    $('#scanLoading').show();
-    $('#scanSuccess,#scanFailed').addClass('d-none');
-
     try {
         const res = await fetch('/api/fingerprint/scan', {
-            method: 'POST',
-            headers: { 'Content-Type':'application/json','Accept':'application/json' },
-            body: JSON.stringify({ fingerprint_id: studentSelect.value })
+            method:'POST',
+            headers:{
+              'Content-Type':'application/json',
+              'Accept':'application/json'
+            },
+            body: JSON.stringify({
+              fingerprint_id: studentSelect.value
+            })
         });
 
         const data = await res.json();
-        $('#scanLoading').hide();
 
-        if (res.ok) {
-            $('#scanSuccess').removeClass('d-none');
-            $('#successText').html(`
-              <strong>${data.student}</strong><br>
-              Jam: ${data.time}<br>
-              Status: ${data.is_late ? 'TERLAMBAT':'HADIR'}
-            `);
+        setTimeout(() => {
+
+            if (res.ok && data.status !== 'already') {
+                showResultModal({
+                    name: data.student,
+                    time: data.time,
+                    status: data.is_late ? 'TERLAMBAT' : 'HADIR'
+                });
+                prependLog(
+                    data.student,
+                    data.time,
+                    data.is_late ? 'TERLAMBAT' : 'HADIR'
+                );
+            }
+            else if (data.status === 'already') {
+                showResultModal({
+                    name: data.student,
+                    time: data.time,
+                    status: 'SUDAH ABSEN'
+                });
+                prependLog(
+                    data.student,
+                    data.time,
+                    'SUDAH ABSEN',
+                    true
+                );
+            }
+            else {
+                showResultModal({
+                    name: '-',
+                    time: '-',
+                    status: 'GAGAL'
+                });
+            }
 
             updateLastScan(data);
-            prependLog({
-                student: data.student,
-                time: data.time,
-                status: data.is_late ? 'TERLAMBAT':'HADIR'
-            });
-
             lastFingerprint = studentSelect.value;
             lastScanTime = now;
 
-            setTimeout(()=>$('#scanModal').modal('hide'),1500);
-        } else {
-            $('#scanFailed').removeClass('d-none');
-            $('#failedText').text(data.message || 'Scan gagal');
-            setTimeout(()=>$('#scanModal').modal('hide'),1800);
-        }
+        }, 400);
 
     } catch {
-        $('#scanLoading').hide();
-        $('#scanFailed').removeClass('d-none');
-        $('#failedText').text('Koneksi gagal');
-        setTimeout(()=>$('#scanModal').modal('hide'),1800);
-    } finally {
-        setTimeout(()=>scanBtn.disabled = false, 1500);
+        setTimeout(() => {
+            showResultModal({
+                name: '-',
+                time: '-',
+                status: 'GAGAL'
+            });
+        }, 400);
+    }
+    finally {
+        setTimeout(()=>scanBtn.disabled=false,1500);
     }
 });
 
-/* ================= LOG ================= */
-function prependLog(log) {
+/* ================= UI HELPERS ================= */
+function showResultModal({ name, time, status }) {
+    $('#scanLoading').hide();
+    $('#scanResult').removeClass('d-none');
+
+    $('#resultName').text(name ?? '-');
+    $('#resultTime').text(time ?? '-');
+
+    const icon  = $('#modalIcon');
+    const title = $('#modalTitle');
+    const badge = $('#resultStatus');
+
+    if (status === 'HADIR') {
+        icon.attr('class','fas fa-check-circle fa-5x text-success mb-3');
+        title.text('Absensi Tercatat');
+        badge.attr('class','badge badge-success px-3 py-2').text('HADIR');
+    }
+    else if (status === 'TERLAMBAT') {
+        icon.attr('class','fas fa-exclamation-circle fa-5x text-warning mb-3');
+        title.text('Absensi Tercatat');
+        badge.attr('class','badge badge-warning px-3 py-2').text('TERLAMBAT');
+    }
+    else if (status === 'SUDAH ABSEN') {
+        icon.attr('class','fas fa-info-circle fa-5x text-secondary mb-3');
+        title.text('Informasi');
+        badge.attr('class','badge badge-secondary px-3 py-2').text('SUDAH ABSEN');
+    }
+    else {
+        icon.attr('class','fas fa-times-circle fa-5x text-danger mb-3');
+        title.text('Scan Gagal');
+        badge.attr('class','badge badge-danger px-3 py-2').text('GAGAL');
+    }
+
+    setTimeout(()=>$('#scanModal').modal('hide'),1600);
+}
+
+function prependLog(name, time, status, info=false) {
     const el = document.createElement('div');
-    el.className = 'log-item log-new';
+    el.className = 'log-item ' + (info ? 'log-info' : 'log-new');
     el.innerHTML = `
-      <strong>${log.student}</strong><br>
-      <small>${log.time} —
-        <span class="${log.status==='HADIR'?'text-success':'text-warning'}">
-          ${log.status}
-        </span>
+      <strong>${name}</strong><br>
+      <small>${time} —
+        <span>${status}</span>
       </small>`;
     logBox.prepend(el);
-    setTimeout(()=>el.classList.remove('log-new'),1000);
 }
 
 function updateLastScan(d) {
-    $('#lastName').text(d.student);
-    $('#lastStatus').text(d.is_late ? 'TERLAMBAT':'HADIR');
-    $('#lastTime').text(d.time);
+    $('#lastName').text(d.student ?? '-');
+    $('#lastStatus').text(
+      d.status ?? (d.is_late ? 'TERLAMBAT' : 'HADIR')
+    );
+    $('#lastTime').text(d.time ?? '-');
 }
 </script>
 @endpush

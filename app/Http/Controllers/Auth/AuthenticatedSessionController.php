@@ -24,11 +24,16 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
+        // 1. Proses autentikasi
         $request->authenticate();
 
+        // 2. Regenerate session (security)
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // 3. Redirect ke halaman tujuan
+        return redirect()
+            ->intended(route('dashboard'))
+            ->with('success', 'Login berhasil. Selamat datang 👋');
     }
 
     /**
@@ -39,9 +44,10 @@ class AuthenticatedSessionController extends Controller
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
-
         $request->session()->regenerateToken();
 
-        return redirect('/login');
+        return redirect()
+            ->route('login')
+            ->with('success', 'Anda berhasil logout.');
     }
 }

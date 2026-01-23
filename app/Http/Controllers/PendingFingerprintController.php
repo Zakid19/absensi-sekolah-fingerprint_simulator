@@ -19,12 +19,12 @@ class PendingFingerprintController extends Controller
 
         return view('fingerprints.pending', compact('pending', 'students'));
     }
-    
+
     public function map(Request $request)
     {
         $request->validate([
             'fingerprint_id' => 'required',
-            'student_id'     => 'required|exists:students,id',
+            'student_id'     => 'required|exists:siswa,id',
         ]);
 
         DB::transaction(function () use ($request) {
