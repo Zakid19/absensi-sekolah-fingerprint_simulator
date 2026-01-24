@@ -53,9 +53,19 @@ class TeacherController extends Controller
                                         <i class="fas fa-edit"></i>
                                     </a>';
 
-                        $string .= '<button title="Hapus" class="btn btn-icon btn-sm btn-danger waves-effect waves-light delete-form"><i class="fa fa-trash"></i></button>';
+                        $string .= '<form action="' . route('teacher.delete', $teacher->id) . '"
+                                    method="POST" class="d-inline delete-form">';
 
-                        $string .= '<form  action="/teacher/delete/' . $teacher->id . '" method="POST">' . method_field('delete') . csrf_field() . '</form>';
+                        $string .= csrf_field();
+                        $string .= method_field('DELETE');
+
+                        $string .= '<button type="submit"
+                            title="Hapus" class="btn btn-icon btn-sm btn-danger waves-effect waves-light"><i class="fa fa-trash"></i>
+                        </button>';
+
+                        $string .= '</form>';
+
+
 
                     $string .= '</div>';
 
@@ -73,26 +83,6 @@ class TeacherController extends Controller
         return view('teacher.form');
     }
 
-    // public function store(Request $request)
-    // {
-    //     $data = $request->validate([
-    //         'name'     => 'required|string|max:255',
-    //         'email'    => 'required|email|unique:users,email',
-    //         'password' => 'nullable|min:6',
-    //     ]);
-
-    //     $password = $data['password'] ?? Str::random(8);
-
-    //     User::create([
-    //         'name'     => $data['name'],
-    //         'email'    => $data['email'],
-    //         'password' => Hash::make($password),
-    //         'role'     => 'teacher',
-    //     ]);
-
-    //     return redirect()->route('teachers.index')
-    //         ->with('success', 'Guru berhasil ditambahkan.');
-    // }
 
     public function store(Request $request)
     {

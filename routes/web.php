@@ -14,6 +14,7 @@ use App\Http\Controllers\DeviceFingerprintController;
 use App\Http\Controllers\AttendanceSettingController;
 use App\Http\Controllers\PendingFingerprintController;
 use App\Http\Controllers\FingerprintModeController;
+use App\Http\Controllers\LogAbsensiController;
 
 Route::get('/', function () {
     return view('auth.login');
@@ -66,6 +67,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/settings', [AttendanceSettingController::class, 'edit'])->name('settings.edit');
         Route::post('/settings', [AttendanceSettingController::class, 'update'])->name('settings.update');
     });
+
 
     Route::group(['prefix' => 'reports', 'as' => 'reports.'], function() {
         Route::get('/manage', [ReportController::class, 'manage'])->name('manage');
@@ -120,6 +122,7 @@ Route::middleware('auth')->group(function () {
 
     });
 
+    Route::get('/absensi/log', [LogAbsensiController::class, 'index'])->name('absensi.log');
 
 });
 

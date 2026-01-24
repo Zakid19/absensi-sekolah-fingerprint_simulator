@@ -5,6 +5,7 @@ use App\Models\Student;
 use App\Models\ClassRoom;
 use App\Models\Attendance;
 use App\Models\PendingFingerprint;
+use App\Models\LogAbsensi;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Str;
@@ -21,7 +22,7 @@ use App\Models\AttendanceSetting;
 
 class FingerprintController extends Controller
 {
-
+    // Khusus Simulator
     public function scan(Request $request)
     {
         Log::info('Fingerprint scan hit', $request->all());
@@ -62,6 +63,20 @@ class FingerprintController extends Controller
             ->exists();
 
         if ($exists) {
+            // return response()->json([
+            //     'status' => 'duplicate',
+            //     'message' => 'Sudah absen hari ini',
+            //     'student' => $student->name,
+            // ], 409);
+
+            LogAbsensi::create([
+                'student_id' => $student->id,
+                'waktu_scan' => $now,
+                'jenis'      => 'masuk',
+                'status'     => 'duplicate',
+                'keterangan' => 'Sudah absen hari ini',
+            ]);
+
             return response()->json([
                 'status' => 'duplicate',
                 'message' => 'Sudah absen hari ini',
@@ -86,12 +101,29 @@ class FingerprintController extends Controller
         $isLate = $now->greaterThan($lateLimit);
 
         // ⚠️ SIMPAN DATA MENTAH SAJA
-        Attendance::create([
+        // Attendance::create([
+        //     'student_id' => $student->id,
+        //     'date'       => $today,
+        //     'time_in'    => $now->format('H:i:s'),
+        //     'status'     => $isLate ? 'TERLAMBAT' : 'HADIR',
+        //     'is_late'    => $isLate,
+        // ]);
+        $attendance = Attendance::create([
             'student_id' => $student->id,
             'date'       => $today,
             'time_in'    => $now->format('H:i:s'),
             'status'     => $isLate ? 'TERLAMBAT' : 'HADIR',
             'is_late'    => $isLate,
+        ]);
+
+        // 2️⃣ SIMPAN LOG (WAJIB DI SINI)
+        LogAbsensi::create([
+            'student_id'    => $student->id,
+            'attendance_id' => $attendance->id,
+            'waktu_scan'    => $now,
+            'jenis'         => 'masuk',
+            'status'        => 'success',
+            'keterangan'    => $isLate ? 'Terlambat' : 'Hadir tepat waktu',
         ]);
 
 
@@ -105,6 +137,7 @@ class FingerprintController extends Controller
         ]);
     }
 
+    // Kalo Pake Device
     public function push(Request $request)
     {
         try {
@@ -316,6 +349,7 @@ class FingerprintController extends Controller
             "Fingerprint {$student->name} berhasil di-reset. Silakan scan ulang."
         );
     }
+
 
     // by device
 

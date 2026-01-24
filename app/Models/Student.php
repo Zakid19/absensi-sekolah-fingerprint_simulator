@@ -3,6 +3,7 @@
 namespace App\Models;
 use App\Models\Attendance;
 use App\Models\ClassRoom;
+use App\Models\logAbsensi;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -26,6 +27,12 @@ class Student extends Model
 
         return $this->hasMany(Attendance::class, 'student_id', 'id');
     }
+
+    public function logAbsensis()
+    {
+        return $this->hasMany(LogAbsensi::class);
+    }
+
 
 }
 
